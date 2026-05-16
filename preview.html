@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
+<title>菲柱3嘻马杯 · 情歌比赛实时评分系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --red:#fe2c55;
+  --red2:#ff5c7a;
+  --gold:#f8c66a;
+  --gold2:#ffe0a3;
+  --purple:#7b4dff;
+  --bg:#080711;
+  --panel:#12101f;
+  --panel2:#19162a;
+  --panel3:#231d38;
+  --line:rgba(255,255,255,.09);
+  --line2:rgba(248,198,106,.28);
+  --text:#fff8ef;
+  --soft:#b9adc7;
+  --muted:#746a83;
+  --green:#38d996;
+  --blue:#6aa8ff;
+  --danger:#ff6262;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei','Noto Sans SC',Arial,sans-serif;
+  color:var(--text);background:var(--bg);max-width:520px;margin:0 auto;height:100vh;position:relative;overflow:hidden;
+}
+body:before{content:'';position:fixed;inset:-20%;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 20% 0%,rgba(254,44,85,.28),transparent 32%),
+    radial-gradient(circle at 82% 12%,rgba(123,77,255,.20),transparent 34%),
+    radial-gradient(ellipse at 50% 100%,rgba(248,198,106,.20),transparent 44%),
+    linear-gradient(180deg,#080711 0%,#100b1b 52%,#090710 100%);
+}
+body:after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 12%,#000 82%,transparent 100%);
+}
+.page{display:none;position:absolute;inset:0;flex-direction:column;overflow-y:auto;z-index:1}
+.page.on{display:flex}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(18px)}
+.btn{display:block;width:100%;border:0;border-radius:18px;padding:15px 16px;font-size:15px;font-weight:800;letter-spacing:.6px;cursor:pointer;font-family:inherit;transition:.16s transform,.16s opacity,.16s filter;color:#fff}
+.btn:active{transform:scale(.98);opacity:.86}.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;filter:grayscale(.45)}
+.btn-primary{background:linear-gradient(135deg,var(--red),var(--gold));box-shadow:0 12px 28px rgba(254,44,85,.22)}
+.btn-ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--soft)}
+.btn-danger{background:rgba(255,98,98,.12);border:1px solid rgba(255,98,98,.26);color:#ff9a9a}.btn-mini{width:auto;padding:10px 13px;border-radius:13px;font-size:12px;white-space:nowrap}
+input,button{font-family:inherit}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:12px;color:var(--soft)}
+
+/* SETUP */
+#p-setup{align-items:center;justify-content:center;padding:28px 20px;text-align:center}
+.logo-mark{width:76px;height:76px;margin:0 auto 16px;border-radius:26px;display:grid;place-items:center;font-size:38px;background:linear-gradient(145deg,rgba(254,44,85,.22),rgba(248,198,106,.18));border:1px solid var(--line2);box-shadow:0 14px 42px rgba(254,44,85,.20)}
+.event-name{font-size:32px;line-height:1.12;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#fff,var(--gold2) 45%,var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.event-sub{font-size:14px;color:var(--soft);letter-spacing:2px;margin-bottom:24px}.setup-card{width:100%;border-radius:28px;padding:22px;margin-top:2px}
+.flabel{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin:0 2px 9px;text-align:left;font-weight:800}.hint{font-size:11px;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:500}
+.finput{width:100%;background:rgba(5,4,12,.62);border:1px solid var(--line);border-radius:17px;padding:14px 15px;color:var(--text);font-size:16px;outline:none;transition:.16s border-color,.16s box-shadow;margin-bottom:15px}.finput:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(248,198,106,.08)}.finput::placeholder{color:#665d72}
+.role-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:2px 0 15px}.rbtn{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:22px;padding:18px 10px;cursor:pointer;transition:.18s all;position:relative;overflow:hidden}.rbtn:before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(254,44,85,.17),rgba(248,198,106,.12));opacity:0;transition:.18s opacity}.rbtn.sel{border-color:var(--gold);box-shadow:0 0 0 3px rgba(248,198,106,.08)}.rbtn.sel:before{opacity:1}.rbtn:active{transform:scale(.97)}.ri{position:relative;font-size:30px;display:block;margin-bottom:7px}.rn{position:relative;font-size:15px;font-weight:900}.rd{position:relative;font-size:11px;color:var(--soft);margin-top:4px}.setup-note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px}.err{background:rgba(255,98,98,.12);border:1px solid rgba(255,98,98,.28);color:#ffaaaa;border-radius:14px;padding:10px 12px;font-size:13px;margin-top:10px;display:none}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line);background:rgba(8,7,17,.76);backdrop-filter:blur(16px);flex-shrink:0}.brand{display:flex;flex-direction:column;gap:2px}.brand b{font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.brand span{font-size:11px;color:var(--muted)}.conn{font-size:12px;color:var(--soft);display:flex;align-items:center;gap:6px}.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}.dot-g{background:var(--green);box-shadow:0 0 12px var(--green)}.dot-y{background:var(--gold);animation:blink 1.2s infinite}.dot-r{background:var(--danger);box-shadow:0 0 12px var(--danger)}@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* JUDGE */
+#p-judge{overflow:hidden}.jscroll,.hscroll{flex:1;overflow-y:auto;padding:18px}.wait-state,.done-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:66vh;gap:14px;text-align:center}.wait-glyph{font-size:62px;filter:drop-shadow(0 12px 28px rgba(254,44,85,.25));animation:float 3s ease-in-out infinite}@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}.wait-t{font-size:16px;color:var(--soft);line-height:1.8}.wait-room{font-size:12px;color:var(--muted)}
+.contestant-card{border-radius:28px;padding:22px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden}.contestant-card:before{content:'';position:absolute;inset:-30%;background:radial-gradient(circle,rgba(248,198,106,.18),transparent 38%);animation:pulse 3.8s ease-in-out infinite}@keyframes pulse{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.15);opacity:1}}.cc-label{position:relative;font-size:12px;color:var(--gold);letter-spacing:2px;margin-bottom:10px;display:block;font-weight:900}.cc-name{position:relative;font-size:34px;font-weight:950;letter-spacing:1px;background:linear-gradient(135deg,#fff,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;word-break:break-all}.score-panel{border-radius:24px;padding:18px;margin-bottom:14px}.sp-label{font-size:12px;color:var(--gold);letter-spacing:1px;margin-bottom:14px;display:flex;justify-content:space-between;font-weight:800}.sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.sb{aspect-ratio:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850;cursor:pointer;transition:.15s all;color:var(--soft)}.sb:active{transform:scale(.9)}.sb.sel{background:linear-gradient(135deg,var(--red),var(--gold));color:#fff;border-color:transparent;transform:scale(1.08);box-shadow:0 10px 22px rgba(254,44,85,.22)}.selrow{text-align:center;font-size:13px;color:var(--soft);margin:14px 0}.selrow b{font-size:24px;font-weight:950;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.done-ic{font-size:76px;animation:pop .35s cubic-bezier(.34,1.56,.64,1)}@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}.done-t{font-size:22px;font-weight:900;color:var(--green)}.done-s{font-size:62px;font-weight:950;letter-spacing:-2px;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.done-sub{font-size:14px;color:var(--soft);line-height:1.7}.judge-tabs-wrap{padding:14px 18px 0;flex-shrink:0}.jscroll{padding-top:14px}.j-panel{display:none}.j-panel.on{display:block}.feedback-card{border-radius:22px;padding:14px 14px 12px;margin-bottom:14px}.feedback-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fb-item{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px}.fb-k{display:block;font-size:11px;color:var(--muted);letter-spacing:.4px;margin-bottom:6px}.fb-item b{font-size:15px;font-weight:900;color:var(--text);display:block;word-break:break-all}.fb-note{font-size:12px;color:var(--soft);line-height:1.6;margin-top:10px}.j-rank-mini{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}.j-rank-mini:last-child{border-bottom:0}.j-rank-num{width:30px;height:30px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.07);font-size:12px;font-weight:950;color:var(--soft);flex-shrink:0}.j-rank-num.top1{background:linear-gradient(135deg,#f8c66a,#ffe0a3);color:#251400}.j-rank-num.top2{background:linear-gradient(135deg,#b8b8c8,#eeeeff);color:#171723}.j-rank-num.top3{background:linear-gradient(135deg,#bc7b45,#e7a66c);color:#fff}.j-rank-info{flex:1;min-width:0}.j-rank-name{font-size:14px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.j-rank-sub{font-size:11px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.j-rank-score{font-size:24px;font-weight:950;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* HOST */
+.tabs{display:flex;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:18px;padding:4px;margin-bottom:14px}.tab{flex:1;padding:11px 8px;text-align:center;border-radius:14px;font-size:13px;color:var(--soft);cursor:pointer;transition:.18s all;font-weight:800}.tab.on{background:linear-gradient(135deg,var(--red),var(--gold));color:#fff}.card{border-radius:24px;padding:17px;margin-bottom:13px}.clabel{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--gold);letter-spacing:1.3px;margin-bottom:11px;font-weight:900}.irow{display:flex;gap:8px}.irow input{flex:1;background:rgba(5,4,12,.62);border:1px solid var(--line);border-radius:16px;padding:13px 14px;color:var(--text);font-size:15px;outline:none;min-width:0}.irow input:focus{border-color:var(--gold)}.pbtn{background:linear-gradient(135deg,var(--red),var(--gold));color:#fff;border:0;border-radius:16px;padding:12px 18px;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap}.host-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.chdr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:13px}.cname-big{font-size:21px;font-weight:950;line-height:1.22;background:linear-gradient(135deg,#fff,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;word-break:break-all}.ccount{font-size:13px;color:var(--soft);white-space:nowrap}.progress{height:8px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin:8px 0 12px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--gold));transition:.28s width}.srow{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}.srow:last-child{border:0}.judge-who{font-weight:750;color:var(--text)}.tag{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:850}.t-done{background:rgba(56,217,150,.13);color:var(--green)}.t-hi{background:rgba(254,44,85,.16);color:#ff91a6}.t-lo{background:rgba(106,168,255,.16);color:var(--blue)}.final-reveal{border-top:1px solid var(--line);padding-top:18px;margin-top:10px;text-align:center}.fr-hint{font-size:12px;color:var(--soft);margin-bottom:8px}.fr-score{font-size:86px;font-weight:950;letter-spacing:-4px;line-height:1;margin-bottom:15px;background:linear-gradient(135deg,#fff,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.empty{text-align:center;padding:34px 12px;color:var(--muted);font-size:14px;line-height:1.7}
+.hist-row{display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--line);gap:12px}.hist-row:last-child{border:0}.medal{width:34px;height:34px;border-radius:14px;display:grid;place-items:center;font-size:14px;font-weight:950;flex-shrink:0;background:rgba(255,255,255,.08)}.m1{background:linear-gradient(135deg,#f8c66a,#ffe0a3);color:#211400}.m2{background:linear-gradient(135deg,#b8b8c8,#eeeeff);color:#171723}.m3{background:linear-gradient(135deg,#bc7b45,#e7a66c);color:#fff}.hi{flex:1;min-width:0}.hn{font-size:15px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hs{font-size:11px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hscore{font-size:28px;font-weight:950;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* FINAL */
+#p-final{overflow-y:auto;align-items:center;padding-bottom:34px}.final-header{text-align:center;padding:36px 20px 20px;width:100%}.fh-sup{font-size:12px;color:var(--gold);letter-spacing:3px;margin-bottom:10px;display:block;font-weight:900}.fh-title{font-size:36px;font-weight:950;letter-spacing:2px;background:linear-gradient(135deg,#fff,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:7px}.fh-sub{font-size:13px;color:var(--soft)}.podium{display:flex;gap:10px;padding:0 16px 18px;width:100%;align-items:flex-end;justify-content:center}.podium-item{flex:1;text-align:center;animation:rise .55s ease both}@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.pod-card{border-radius:24px;padding:16px 8px 14px;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));border:1px solid var(--line);box-shadow:var(--shadow)}.pod-1{border-color:rgba(248,198,106,.52);box-shadow:0 18px 60px rgba(248,198,106,.12)}.pod-2{border-color:rgba(210,210,225,.32)}.pod-3{border-color:rgba(231,166,108,.32)}.pod-medal{font-size:31px;display:block;margin-bottom:8px}.pod-name{font-size:13px;font-weight:950;margin-bottom:7px;word-break:break-all}.pod-score{font-size:27px;font-weight:950;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.pod-rank-label{font-size:11px;color:var(--muted);margin-top:7px;display:block}.rank-list{width:100%;padding:0 18px}.rank-item{display:flex;align-items:center;gap:12px;padding:13px 15px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:18px;margin-bottom:9px;animation:rise .38s ease both}.rk-num{width:28px;text-align:center;font-size:15px;font-weight:900;color:var(--soft);flex-shrink:0}.rk-info{flex:1;min-width:0}.rk-name{font-size:15px;font-weight:850}.rk-detail{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rk-score{font-size:23px;font-weight:950;background:linear-gradient(135deg,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.final-actions{padding:18px;width:100%;display:flex;flex-direction:column;gap:10px}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:rgba(18,16,31,.96);border:1px solid var(--line2);border-radius:999px;padding:11px 16px;color:var(--text);font-size:13px;z-index:30;opacity:0;pointer-events:none;transition:.2s all;box-shadow:var(--shadow)}.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.action-flash{position:fixed;left:50%;top:76px;transform:translateX(-50%) scale(.92);z-index:35;min-width:250px;max-width:88%;padding:16px 18px;border-radius:24px;background:rgba(18,16,31,.96);border:1px solid var(--line2);box-shadow:0 22px 70px rgba(0,0,0,.52);text-align:center;opacity:0;pointer-events:none;transition:.22s all}.action-flash.on{opacity:1;transform:translateX(-50%) scale(1)}.af-ic{font-size:34px;display:block;margin-bottom:7px;filter:drop-shadow(0 10px 20px rgba(248,198,106,.22))}.af-t{font-size:16px;font-weight:950;background:linear-gradient(135deg,#fff,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.af-s{font-size:12px;color:var(--soft);margin-top:5px;line-height:1.55}.confirm-mask{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.60);backdrop-filter:blur(12px);display:none;align-items:flex-end;justify-content:center;padding:18px}.confirm-mask.on{display:flex}.confirm-box{width:100%;max-width:486px;border-radius:30px;padding:20px;animation:sheetUp .22s ease both}@keyframes sheetUp{from{opacity:0;transform:translateY(22px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}.confirm-ic{width:54px;height:54px;border-radius:21px;display:grid;place-items:center;font-size:28px;margin-bottom:12px;background:linear-gradient(135deg,rgba(254,44,85,.22),rgba(248,198,106,.16));border:1px solid var(--line2)}.confirm-title{font-size:20px;font-weight:950;margin-bottom:8px}.confirm-msg{font-size:14px;color:var(--soft);line-height:1.7;margin-bottom:14px}.confirm-score{font-size:54px;line-height:1;font-weight:950;margin:5px 0 16px;background:linear-gradient(135deg,#fff,var(--gold2),var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.confirm-type{display:none;margin:0 0 14px}.confirm-type.on{display:block}.confirm-type input{width:100%;background:rgba(5,4,12,.62);border:1px solid var(--line);border-radius:16px;padding:13px 14px;color:var(--text);font-size:15px;outline:none}.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.confirm-ok.danger{background:linear-gradient(135deg,#ff5353,var(--red));box-shadow:0 12px 28px rgba(255,83,83,.22)}.btn-warn{position:relative;overflow:hidden}.btn-warn:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transform:translateX(-120%)}.btn-warn:active:after{animation:shine .42s ease}@keyframes shine{to{transform:translateX(120%)}}.shake{animation:shake .32s ease}@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}.locked-note{font-size:12px;color:var(--gold);line-height:1.6;margin:-2px 0 14px;text-align:left}.security-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:7px 11px;border-radius:999px;background:rgba(56,217,150,.10);border:1px solid rgba(56,217,150,.22);color:var(--green);font-size:11px;font-weight:850}
+
+@media (max-width:380px){.event-name{font-size:28px}.fr-score{font-size:72px}.cc-name{font-size:30px}.sgrid{gap:7px}.sb{font-size:12px}.podium{gap:7px;padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+
+<div class="page on" id="p-setup">
+  <div style="width:100%">
+    <div class="logo-mark">🎤</div>
+    <div class="event-name">菲柱3嘻马杯</div>
+    <div class="event-sub">点唱厅 · 情歌主题赛 · 实时评分系统</div>
+    <div class="setup-card glass">
+      <label class="flabel">房间码 <span class="hint">所有人填写同一个</span></label>
+      <input class="finput" id="room-code" placeholder="例如：QINGGE520" maxlength="20" style="text-align:center;letter-spacing:2px;text-transform:uppercase">
+      <div class="role-row">
+        <div class="rbtn sel" id="rc-host" onclick="pickRole('host')">
+          <span class="ri">🎙️</span><div class="rn">主持人</div><div class="rd">需要主持人密码</div>
+        </div>
+        <div class="rbtn" id="rc-judge" onclick="pickRole('judge')">
+          <span class="ri">✨</span><div class="rn">评委</div><div class="rd">评分 / 看排名</div>
+        </div>
+      </div>
+      <div id="host-setup">
+        <label class="flabel">主持人密码 <span class="hint">只有主持人知道</span></label>
+        <input class="finput" id="host-password" type="password" placeholder="输入主持人专属密码" maxlength="24" style="text-align:center">
+        <div class="locked-note">🔐 主持人端会被密码锁住。评委不需要这个密码，只需要房间码和评委名称。</div>
+        <label class="flabel">评委人数 <span class="hint">默认 5 位</span></label>
+        <input class="finput" id="judge-count" type="number" inputmode="numeric" min="3" max="10" value="5" style="margin-bottom:0;text-align:center">
+      </div>
+      <div id="judge-setup" style="display:none">
+        <label class="flabel">评委名称 <span class="hint">用于显示评分状态</span></label>
+        <input class="finput" id="judge-name" placeholder="请输入你的名字" maxlength="12" style="margin-bottom:0;text-align:center">
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="enter()">进入评分系统</button>
+      <div class="setup-note">小提示：评委只需要房间码进入；主持人必须额外输入主持人密码。比赛前不要把主持人密码发给评委。</div>
+      <div class="err" id="setup-err"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="p-judge">
+  <div class="topbar">
+    <div class="brand"><b>菲柱3嘻马杯 · 评委端</b><span id="j-roomline">等待连接</span></div>
+    <span class="conn"><span class="dot dot-y" id="j-dot"></span><span id="j-conn">连接中</span></span>
+  </div>
+  <div class="judge-tabs-wrap">
+    <div class="tabs">
+      <div class="tab on" id="jtab-score" onclick="jtab('score')">当前打分</div>
+      <div class="tab" id="jtab-rank" onclick="jtab('rank')">实时排名</div>
+    </div>
+  </div>
+  <div class="jscroll">
+    <div class="j-panel on" id="j-panel-score">
+      <div class="card glass feedback-card" id="j-feedback-card">
+        <div class="feedback-row">
+          <div class="fb-item"><span class="fb-k">当前状态</span><b id="j-live-name">等待主持人发布</b></div>
+          <div class="fb-item"><span class="fb-k">提交进度</span><b id="j-live-count">0 / 5</b></div>
+        </div>
+        <div class="progress"><div class="bar" id="j-progress"></div></div>
+        <div class="fb-note" id="j-feedback-note">进入房间后，系统会实时同步选手状态和比赛排名。</div>
+      </div>
+      <div class="wait-state" id="j-wait">
+        <div class="wait-glyph">🎶</div>
+        <div class="wait-t">欢迎，<span id="j-myname" style="color:var(--gold);font-weight:900"></span><br>等待主持人发布下一位选手</div>
+        <div class="wait-room">房间码：<span id="j-roomshow"></span></div>
+      </div>
+      <div id="j-score" style="display:none">
+        <div class="contestant-card glass">
+          <span class="cc-label">当前出场选手</span>
+          <div class="cc-name" id="j-cname">—</div>
+        </div>
+        <div class="score-panel glass">
+          <span class="sp-label"><span>选择分数</span><span>满分 5.0</span></span>
+          <div class="sgrid" id="j-grid"></div>
+        </div>
+        <div class="selrow">你选择的是：<b id="j-selval">未选择</b></div>
+        <button class="btn btn-primary" id="j-sub" onclick="judgeSubmit()" disabled>提交评分</button>
+      </div>
+      <div class="done-state" id="j-done" style="display:none">
+        <div class="done-ic">💝</div>
+        <div class="done-t">评分已锁定</div>
+        <div class="done-s" id="j-donescore"></div>
+        <div class="done-sub">请等待主持人发布下一位选手。<br>你也可以切换到“实时排名”查看最新名次。</div>
+      </div>
+    </div>
+    <div class="j-panel" id="j-panel-rank">
+      <div class="card glass">
+        <div class="chdr">
+          <span style="font-size:15px;font-weight:900;color:var(--gold)">实时排名</span>
+          <span class="pill" id="j-rank-count">0 位选手</span>
+        </div>
+        <div id="j-ranklist"><div class="empty">暂时还没有已确认的成绩</div></div>
+      </div>
+      <div class="card glass">
+        <div class="chdr">
+          <span style="font-size:15px;font-weight:900;color:var(--gold)">当前轮状态</span>
+          <span class="pill" id="j-round-pill">0 / 5</span>
+        </div>
+        <div class="hs" id="j-rank-status" style="font-size:13px;color:var(--soft);line-height:1.7">等待主持人发布下一位选手…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="p-host">
+  <div class="topbar">
+    <div class="brand"><b>菲柱3嘻马杯 · 主持人端</b><span id="h-roomline">等待连接</span></div>
+    <span class="conn"><span class="dot dot-y" id="h-dot"></span><span id="h-conn">连接中</span></span>
+  </div>
+  <div class="hscroll">
+    <div class="tabs">
+      <div class="tab on" id="tab-cur" onclick="htab('cur')">当前评分</div>
+      <div class="tab" id="tab-hist" onclick="htab('hist')">成绩排名</div>
+    </div>
+    <div id="panel-cur">
+      <div class="card glass">
+        <span class="clabel">发布出场选手 <span class="pill">评委 <b id="host-jc-pill">5</b> 位</span></span>
+        <div class="irow">
+          <input id="h-input" placeholder="输入选手 / 主播昵称" maxlength="18" onkeydown="if(event.key==='Enter')publish()">
+          <button class="pbtn" onclick="publish()">发布</button>
+        </div>
+        <div class="host-toolbar">
+          <button class="btn btn-ghost btn-mini" onclick="copyRoom()">复制房间码</button>
+          <button class="btn btn-ghost btn-mini" onclick="changeJudgeCount()">修改评委人数</button>
+          <button class="btn btn-danger btn-mini btn-warn" onclick="resetCurrent()">重置当前选手</button>
+          <button class="btn btn-danger btn-mini btn-warn" onclick="clearAllData()">清空房间数据</button>
+        </div>
+      </div>
+      <div class="card glass">
+        <div class="chdr">
+          <div>
+            <div class="cname-big" id="h-curname">暂无出场选手</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:5px" id="h-status-text">发布选手后，评委会自动看到打分页面</div>
+          </div>
+          <span class="ccount" id="h-count">0 / <span id="h-total">5</span></span>
+        </div>
+        <div class="progress"><div class="bar" id="h-progress"></div></div>
+        <div id="h-rows"><div class="empty">等待主持人发布选手…</div></div>
+        <div id="h-final" style="display:none" class="final-reveal">
+          <div class="fr-hint" id="h-calc-hint">5 位及以上评委：去掉最高分和最低分，取中间均值</div>
+          <div class="fr-score" id="h-fnum">—</div>
+          <button class="btn btn-primary" onclick="confirmScore()">确认成绩，进入下一位</button>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-warn" onclick="endCompetition()">🏆 结束比赛，公布总排名</button>
+    </div>
+    <div id="panel-hist" style="display:none">
+      <div class="card glass">
+        <div class="chdr">
+          <span style="font-size:15px;font-weight:900;color:var(--gold)">成绩记录</span>
+          <button onclick="clearHist()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit">清空记录</button>
+        </div>
+        <div id="h-histlist"><div class="empty">暂无成绩记录</div></div>
+      </div>
+      <button class="btn btn-danger btn-warn" onclick="endCompetition()">🏆 结束比赛，公布总排名</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="p-final">
+  <div class="final-header">
+    <span class="fh-sup">菲柱3嘻马杯 · 点唱厅情歌主题赛</span>
+    <div class="fh-title">最终排名</div>
+    <div class="fh-sub" id="f-sub">感谢所有选手的精彩演唱</div>
+  </div>
+  <div class="podium" id="f-podium"></div>
+  <div class="rank-list" id="f-ranklist"></div>
+  <div class="final-actions">
+    <button class="btn btn-ghost" onclick="backToHost()">返回主持人界面</button>
+  </div>
+</div>
+
+<div class="action-flash" id="action-flash">
+  <span class="af-ic" id="af-ic">✅</span>
+  <div class="af-t" id="af-t">操作成功</div>
+  <div class="af-s" id="af-s"></div>
+</div>
+
+<div class="confirm-mask" id="confirm-mask">
+  <div class="confirm-box glass">
+    <div class="confirm-ic" id="confirm-ic">⚠️</div>
+    <div class="confirm-title" id="confirm-title">确认操作</div>
+    <div class="confirm-msg" id="confirm-msg">请确认是否继续。</div>
+    <div class="confirm-score" id="confirm-score" style="display:none"></div>
+    <div class="confirm-type" id="confirm-type-wrap">
+      <input id="confirm-type-input" placeholder="">
+    </div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-primary confirm-ok" id="confirm-ok" onclick="runConfirm()">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
+<script>
+const BROKER='wss://broker.emqx.io:8084/mqtt';
+const SCORES=[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5];
+let role='host',myName='',roomCode='',client,connected=false;
+let selScore=null,submittedFor=null,lastContestant=null,hostJudgeCount=5;
+let judgeTabMode='score',lastHistorySignature='',lastContestantToast='',judgeHasSynced=false;
+let hostSecret='',hostHash='',pendingConfirm=null;
+let state={contestant:null,scores:{},history:[],judgeCount:5,hostHash:null};
+
+function $(id){return document.getElementById(id)}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('on'),2100)}
+function vibe(pattern=25){try{if(navigator.vibrate)navigator.vibrate(pattern)}catch(e){}}
+function playPing(type='ok'){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const ctx=new A(),o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=type==='warn'?180:720;g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.08,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.16);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.17)}catch(e){}}
+function flash(title,sub='',icon='✅',type='ok'){const f=$('action-flash');$('af-ic').textContent=icon;$('af-t').textContent=title;$('af-s').textContent=sub||'';f.classList.add('on');vibe(type==='warn'?[45,35,45]:30);playPing(type);clearTimeout(window.__flashTimer);window.__flashTimer=setTimeout(()=>f.classList.remove('on'),1700)}
+function askConfirm(opts,onOk){pendingConfirm={opts,onOk};$('confirm-ic').textContent=opts.icon||'⚠️';$('confirm-title').textContent=opts.title||'确认操作';$('confirm-msg').innerHTML=opts.message||'请确认是否继续。';$('confirm-ok').textContent=opts.okText||'确认';$('confirm-ok').classList.toggle('danger',!!opts.danger);if(opts.score){$('confirm-score').style.display='';$('confirm-score').textContent=opts.score}else{$('confirm-score').style.display='none';$('confirm-score').textContent=''}const wrap=$('confirm-type-wrap'),inp=$('confirm-type-input');if(opts.typeToConfirm){wrap.classList.add('on');inp.value='';inp.placeholder=`输入 ${opts.typeToConfirm} 后确认`;setTimeout(()=>inp.focus(),80)}else{wrap.classList.remove('on')} $('confirm-mask').classList.add('on');vibe(18)}
+function closeConfirm(){pendingConfirm=null;$('confirm-mask').classList.remove('on')}
+function runConfirm(){if(!pendingConfirm)return;const {opts,onOk}=pendingConfirm;if(opts.typeToConfirm&&$('confirm-type-input').value.trim()!==opts.typeToConfirm){$('confirm-type-input').classList.remove('shake');void $('confirm-type-input').offsetWidth;$('confirm-type-input').classList.add('shake');toast('请输入正确确认文字');return}closeConfirm();onOk&&onOk()}
+function showErr(m){const e=$('setup-err');e.textContent=m;e.style.display='';setTimeout(()=>e.style.display='none',3600)}
+function cleanRoom(v){return v.trim().replace(/\s+/g,'-').toUpperCase()}
+function simpleHash(str){let h1=0xdeadbeef^str.length,h2=0x41c6ce57^str.length;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
+function makeHostHash(room,pwd){return simpleHash(room+'::'+pwd)}
+function requireHost(){if(role!=='host'){toast('评委端不能使用主持人控制功能');return false}if(state.hostHash&&hostHash&&state.hostHash!==hostHash){toast('主持人密码不正确，无法操作');return false}return true}
+function validateHostAccess(){if(role!=='host')return true;if(state.hostHash&&hostHash&&state.hostHash!==hostHash){toast('主持人密码不正确');setTimeout(()=>{try{client&&client.end(true)}catch(e){};connected=false;setConn('r');show('p-setup');showErr('主持人密码不正确，已退出主持人端。')},250);return false}return true}
+function pickRole(r){
+  role=r;$('rc-host').classList.toggle('sel',r==='host');$('rc-judge').classList.toggle('sel',r==='judge');
+  $('host-setup').style.display=r==='host'?'':'none';$('judge-setup').style.display=r==='judge'?'':'none';
+}
+function enter(){
+  roomCode=cleanRoom($('room-code').value);$('room-code').value=roomCode;
+  if(!roomCode){showErr('请填写房间码');return}
+  if(role==='judge'){
+    myName=$('judge-name').value.trim();if(!myName){showErr('请填写评委名称');return}
+    hostSecret='';hostHash='';$('j-myname').textContent=myName;$('j-roomshow').textContent=roomCode;$('j-roomline').textContent='房间码：'+roomCode;buildGrid();show('p-judge')
+  }else{
+    hostSecret=$('host-password').value.trim();if(!hostSecret){showErr('请填写主持人密码');return}
+    hostHash=makeHostHash(roomCode,hostSecret);hostJudgeCount=limitJudgeCount($('judge-count').value);state.judgeCount=hostJudgeCount;$('h-roomline').textContent='房间码：'+roomCode+' · 主持人已加密';show('p-host');renderHost();flash('主持人端已解锁','请不要把主持人密码发给评委','🔐')
+  }
+  mqttConnect()
+}
+function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));$(id).classList.add('on')}
+function limitJudgeCount(v){v=parseInt(v,10);if(isNaN(v))v=5;return Math.max(3,Math.min(10,v))}
+function topic(t){return 'fzxm-love-song/'+roomCode+'/'+t}
+function setConn(s){const cls={g:'dot-g',y:'dot-y',r:'dot-r'}[s],txt={g:'已连接',y:'连接中',r:'已断开'}[s];['j','h'].forEach(p=>{const d=$(p+'-dot'),t=$(p+'-conn');if(d)d.className='dot '+cls;if(t)t.textContent=txt})}
+function mqttConnect(){
+  setConn('y');
+  client=mqtt.connect(BROKER,{clientId:'fzxm_'+Math.random().toString(36).slice(2,10),clean:true,reconnectPeriod:3000,connectTimeout:10000});
+  client.on('connect',()=>{connected=true;setConn('g');client.subscribe(topic('state'),{qos:1});toast('已连接实时评分房间');if(role==='host')setTimeout(()=>hostInitLock(),650)});
+  client.on('message',(t,payload)=>{try{if(t===topic('state')){const prevContestant=state.contestant;const prevHistorySig=historySignature(state.history||[]);state=JSON.parse(payload.toString())||state;if(!state.history)state.history=[];if(!state.scores)state.scores={};if(!state.judgeCount)state.judgeCount=hostJudgeCount||5;if(!('hostHash' in state))state.hostHash=null;if(role==='host'&&!validateHostAccess())return;if(role==='judge'){announceJudgeUpdate(prevContestant,prevHistorySig);renderJudge()}else renderHost()}}catch(e){console.warn(e)}});
+  client.on('reconnect',()=>setConn('y'));client.on('offline',()=>{connected=false;setConn('r')});client.on('error',()=>setConn('r'));
+}
+function pub(s){if(!client||!connected){toast('网络还没连接，请等一下');return false}if(role==='host'){if(!requireHost())return false;s.hostHash=s.hostHash||state.hostHash||hostHash||null}else if(state.hostHash&&!s.hostHash){s.hostHash=state.hostHash}client.publish(topic('state'),JSON.stringify(s),{qos:1,retain:true});return true}
+function hostInitLock(){if(role!=='host'||!connected)return;if(state.hostHash&&state.hostHash!==hostHash){validateHostAccess();return}if(!state.hostHash){const s=JSON.parse(JSON.stringify(state));s.hostHash=hostHash;s.judgeCount=hostJudgeCount||s.judgeCount||5;state=s;pub(s);flash('主持人密码已设置','本房间主持人端已锁定','🔐')}}
+
+function historySignature(list){return (list||[]).map(x=>x.id+':'+Number(x.finalScore||0).toFixed(2)).join('|')}
+function jtab(t){judgeTabMode=t;$('jtab-score').classList.toggle('on',t==='score');$('jtab-rank').classList.toggle('on',t==='rank');$('j-panel-score').classList.toggle('on',t==='score');$('j-panel-rank').classList.toggle('on',t==='rank');if(t==='rank')renderJudgeRanking()}
+function announceJudgeUpdate(prevContestant,prevHistorySig){
+  const newHistorySig=historySignature(state.history||[]);
+  if(judgeHasSynced){
+    if(state.contestant&&state.contestant!==prevContestant&&state.contestant!==lastContestantToast){lastContestantToast=state.contestant;toast('新选手上场：'+state.contestant)}
+    if(newHistorySig!==prevHistorySig&&state.history&&state.history.length){
+      const latest=state.history[0];
+      if(latest)toast(`成绩已确认：${latest.name} ${Number(latest.finalScore).toFixed(2)} 分`)
+    }
+  }
+  lastHistorySignature=newHistorySig;judgeHasSynced=true
+}
+function renderJudgeFeedback(){
+  const jCount=state.judgeCount||hostJudgeCount||5;const done=Object.keys(state.scores||{}).length;const percent=Math.min(100,Math.round(done/jCount*100));
+  $('j-live-count').textContent=`${done} / ${jCount}`;$('j-progress').style.width=percent+'%';$('j-round-pill').textContent=`${done} / ${jCount}`;
+  if(state.contestant){
+    $('j-live-name').textContent=state.contestant;
+    const mine=state.scores&&state.scores[myName]!=null?`你的评分：${Number(state.scores[myName]).toFixed(1)} 分。`:'你还没有提交评分。';
+    $('j-feedback-note').textContent=done>=jCount?'所有评委已提交，等待主持人确认成绩。':`${mine} 当前已收到 ${done} / ${jCount} 位评委评分。`;
+    $('j-rank-status').textContent=`当前评分中：${state.contestant}。已收到 ${done} / ${jCount} 位评委评分${state.scores&&state.scores[myName]!=null?`，你的分数是 ${Number(state.scores[myName]).toFixed(1)} 分。`: '。'}`;
+  }else{
+    $('j-live-name').textContent=(state.history||[]).length?'本轮已结束':'等待主持人发布';
+    $('j-feedback-note').textContent=(state.history||[]).length?'当前没有正在评分的选手，你可以查看实时排名。':'进入房间后，系统会实时同步选手状态和比赛排名。';
+    $('j-rank-status').textContent=(state.history||[]).length?`当前暂无正在评分的选手，已完成 ${(state.history||[]).length} 位选手的成绩确认。`:'等待主持人发布下一位选手…';
+  }
+}
+function renderJudgeRanking(){
+  const sorted=[...(state.history||[])].sort((a,b)=>b.finalScore-a.finalScore);$('j-rank-count').textContent=`${sorted.length} 位选手`;
+  $('j-ranklist').innerHTML=sorted.length?sorted.map((item,i)=>{const c=i===0?' top1':i===1?' top2':i===2?' top3':'';const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;const detail=Object.entries(item.scores||{}).map(([n,v])=>`${escapeHtml(n)}:${Number(v).toFixed(1)}`).join('  ');return `<div class="j-rank-mini"><div class="j-rank-num${c}">${medal}</div><div class="j-rank-info"><div class="j-rank-name">${escapeHtml(item.name)}</div><div class="j-rank-sub">${detail||'已确认成绩'}</div></div><div class="j-rank-score">${Number(item.finalScore).toFixed(2)}</div></div>`}).join(''):'<div class="empty">暂时还没有已确认的成绩</div>'
+}
+function buildGrid(){ $('j-grid').innerHTML=SCORES.map(s=>`<div class="sb" id="sb${String(s).replace('.','_')}" onclick="pick(${s})">${s.toFixed(1)}</div>`).join('') }
+function clearSelection(){selScore=null;document.querySelectorAll('.sb').forEach(b=>b.classList.remove('sel'));$('j-selval').textContent='未选择';$('j-sub').disabled=true}
+function pick(s){selScore=s;document.querySelectorAll('.sb').forEach(b=>b.classList.remove('sel'));$('sb'+String(s).replace('.','_')).classList.add('sel');$('j-selval').textContent=s.toFixed(1)+' 分';$('j-sub').disabled=false}
+function renderJudge(){
+  const c=state.contestant;renderJudgeFeedback();renderJudgeRanking();
+  if(c!==lastContestant){lastContestant=c;clearSelection();submittedFor=null}
+  if(!c){$('j-wait').style.display='';$('j-score').style.display='none';$('j-done').style.display='none';return}
+  $('j-cname').textContent=c;$('j-wait').style.display='none';
+  if(state.scores&&state.scores[myName]!=null){submittedFor=c;$('j-donescore').textContent=Number(state.scores[myName]).toFixed(1)+' 分';$('j-score').style.display='none';$('j-done').style.display=''}
+  else{$('j-score').style.display='';$('j-done').style.display='none'}
+}
+function judgeSubmit(){
+  if(selScore==null||!state.contestant)return;
+  const target=state.contestant,score=selScore;
+  askConfirm({icon:'🎯',title:'确认提交评分？',message:`选手：<b>${escapeHtml(target)}</b><br>提交后本轮不能重复修改。`,score:score.toFixed(1)+' 分',okText:'确认提交'},()=>{
+    const btn=$('j-sub');btn.disabled=true;btn.textContent='提交中…';
+    const s=JSON.parse(JSON.stringify(state));s.scores=s.scores||{};s.scores[myName]=score;
+    if(pub(s)){submittedFor=target;$('j-donescore').textContent=score.toFixed(1)+' 分';$('j-score').style.display='none';$('j-done').style.display='';flash('评分已提交',`${target} · ${score.toFixed(1)} 分`,'💝')}
+    btn.disabled=false;btn.textContent='提交评分'
+  })
+}
+
+function htab(t){$('tab-cur').classList.toggle('on',t==='cur');$('tab-hist').classList.toggle('on',t==='hist');$('panel-cur').style.display=t==='cur'?'':'none';$('panel-hist').style.display=t==='hist'?'':'none';if(t==='hist')renderHist()}
+function publish(){
+  if(!requireHost())return;
+  const name=$('h-input').value.trim();if(!name){toast('请输入选手昵称');return}
+  hostJudgeCount=state.judgeCount||hostJudgeCount||5;
+  const s={contestant:name,scores:{},history:state.history||[],judgeCount:hostJudgeCount};state=s;pub(s);$('h-input').value='';renderHost();flash('新选手已发布',name,'🎤')
+}
+function calcFinal(scores){
+  const vals=Object.values(scores||{}).map(Number).filter(v=>!isNaN(v));if(vals.length<3)return null;
+  const sorted=[...vals].sort((a,b)=>a-b);const mid=vals.length>=5?sorted.slice(1,-1):sorted;
+  return Math.round(mid.reduce((a,b)=>a+b,0)/mid.length*100)/100
+}
+function renderHost(){
+  const s=state||{};const jCount=s.judgeCount||hostJudgeCount||5;hostJudgeCount=jCount;$('host-jc-pill').textContent=jCount;$('h-total').textContent=jCount;
+  const map=s.scores||{},names=Object.keys(map),done=names.length,percent=Math.min(100,Math.round(done/jCount*100));
+  $('h-curname').textContent=s.contestant||'暂无出场选手';$('h-count').innerHTML=done+' / <span id="h-total">'+jCount+'</span>';$('h-progress').style.width=percent+'%';
+  $('h-status-text').textContent=s.contestant?`正在收集评分，还差 ${Math.max(0,jCount-done)} 位评委`:'发布选手后，评委会自动看到打分页面';
+  if(!s.contestant){$('h-rows').innerHTML='<div class="empty">等待主持人发布选手…</div>';$('h-final').style.display='none';renderHist();return}
+  let hiName='',loName='';
+  if(done>=jCount&&done>1){const vals=names.map(n=>Number(map[n])),mx=Math.max(...vals),mn=Math.min(...vals);let hf=false,lf=false;names.forEach(n=>{if(!hf&&Number(map[n])===mx){hiName=n;hf=true}if(!lf&&Number(map[n])===mn){loName=n;lf=true}})}
+  $('h-rows').innerHTML=names.length?names.map(n=>{const v=Number(map[n]);let tag;if(done>=jCount&&n===hiName&&jCount>=5)tag=`<span class="tag t-hi">最高 ${v.toFixed(1)}</span>`;else if(done>=jCount&&n===loName&&jCount>=5)tag=`<span class="tag t-lo">最低 ${v.toFixed(1)}</span>`;else tag=`<span class="tag t-done">${v.toFixed(1)} 分</span>`;return `<div class="srow"><span class="judge-who">${escapeHtml(n)}</span>${tag}</div>`}).join(''):'<div class="empty">等待评委打分…</div>';
+  if(done>=jCount){const f=calcFinal(map);$('h-fnum').textContent=f!=null?f.toFixed(2):'—';$('h-calc-hint').textContent=jCount>=5?'已去掉最高分和最低分，取中间均值':'评委少于 5 位，系统取平均分';$('h-final').style.display=''}else $('h-final').style.display='none';
+  renderHist()
+}
+function confirmScore(){
+  if(!requireHost())return;
+  const map=state.scores||{},names=Object.keys(map),jCount=state.judgeCount||hostJudgeCount||5;if(names.length<jCount){toast(`还差 ${jCount-names.length} 位评委未提交`);return}
+  const final=calcFinal(map);if(final==null){toast('至少需要 3 位评委评分');return}
+  const player=state.contestant;
+  askConfirm({icon:'🏅',title:'确认保存本轮成绩？',message:`选手：<b>${escapeHtml(player)}</b><br>确认后会进入成绩排名，并清空当前评分。`,score:final.toFixed(2)+' 分',okText:'保存成绩'},()=>{
+    const s=JSON.parse(JSON.stringify(state));s.history=s.history||[];s.history.unshift({id:Date.now()+Math.random(),name:s.contestant,finalScore:final,scores:{...map},time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});s.contestant=null;s.scores={};state=s;pub(s);renderHost();flash('成绩已确认',`${player} · ${final.toFixed(2)} 分`,'🏅')
+  })
+}
+function renderHist(){
+  const h=state.history||[],el=$('h-histlist');if(!h.length){el.innerHTML='<div class="empty">暂无成绩记录</div>';return}
+  const sorted=[...h].sort((a,b)=>b.finalScore-a.finalScore);
+  el.innerHTML=h.map(item=>{const rank=sorted.findIndex(x=>x.id===item.id)+1;const mc=rank<=3?'m'+rank:'';const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;const detail=Object.entries(item.scores||{}).map(([n,v])=>`${escapeHtml(n)}:${Number(v).toFixed(1)}`).join('  ');return `<div class="hist-row"><div class="medal ${mc}">${medal}</div><div class="hi"><div class="hn">${escapeHtml(item.name)}</div><div class="hs">${detail}</div></div><div class="hscore">${Number(item.finalScore).toFixed(2)}</div></div>`}).join('')
+}
+function clearHist(){if(!requireHost())return;askConfirm({icon:'🧹',title:'清空成绩记录？',message:'这个操作会删除所有已确认成绩。',okText:'确认清空',danger:true,typeToConfirm:'CLEAR'},()=>{const s=JSON.parse(JSON.stringify(state));s.history=[];state=s;pub(s);renderHist();flash('成绩记录已清空','','🧹','warn')})}
+function resetCurrent(){if(!requireHost())return;if(!state.contestant){toast('当前没有选手');return}askConfirm({icon:'↩️',title:'重置当前选手？',message:`当前选手：<b>${escapeHtml(state.contestant)}</b><br>已提交的临时评分会被清空，但成绩记录不会受影响。`,okText:'确认重置',danger:true},()=>{const s=JSON.parse(JSON.stringify(state));s.contestant=null;s.scores={};state=s;pub(s);renderHost();flash('当前选手已重置','','↩️','warn')})}
+function changeJudgeCount(){if(!requireHost())return;const old=state.judgeCount||hostJudgeCount||5;const val=prompt('请输入评委人数（3-10）',old);if(val===null)return;const jc=limitJudgeCount(val);hostJudgeCount=jc;const s=JSON.parse(JSON.stringify(state));s.judgeCount=jc;state=s;pub(s);renderHost();flash('评委人数已更新',jc+' 位评委','👥')}
+function copyRoom(){const text=roomCode||$('room-code').value;if(!text){toast('没有房间码');return}if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>toast('房间码已复制')).catch(()=>toast('房间码：'+text))}else toast('房间码：'+text)}
+function clearAllData(){if(!requireHost())return;askConfirm({icon:'🚨',title:'清空本房间全部数据？',message:'当前选手、临时评分、成绩记录都会清空。主持人密码会保留。',okText:'确认清空',danger:true,typeToConfirm:'CLEAR'},()=>{state={contestant:null,scores:{},history:[],judgeCount:hostJudgeCount||5,hostHash:hostHash||state.hostHash||null};pub(state);renderHost();flash('本房间数据已清空','主持人密码仍然有效','🚨','warn')})}
+function endCompetition(){if(!requireHost())return;const h=state.history||[];if(!h.length){toast('还没有成绩记录');return}askConfirm({icon:'🏆',title:'公布最终排名？',message:`共 <b>${h.length}</b> 位选手已完成评分。确认后会切换到最终排名页。`,okText:'公布排名'},()=>{renderFinal();show('p-final');flash('最终排名已公布',`共 ${h.length} 位选手`,'🏆')})}
+function renderFinal(){
+  const sorted=[...(state.history||[])].sort((a,b)=>b.finalScore-a.finalScore);$('f-sub').textContent=`共 ${sorted.length} 位选手参赛，感谢每一位的精彩演唱`;
+  const display=sorted.length===1?[sorted[0]]:sorted.length===2?[sorted[1],sorted[0]]:[sorted[1],sorted[0],sorted[2]];const medals=['🥇','🥈','🥉'];
+  $('f-podium').innerHTML=display.map(item=>{if(!item)return'';const realRank=sorted.findIndex(x=>x.id===item.id)+1;const pad=realRank===1?'0':realRank===2?'22px':'34px';return `<div class="podium-item" style="padding-top:${pad}"><div class="pod-card pod-${realRank}"><span class="pod-medal">${medals[realRank-1]||realRank}</span><div class="pod-name">${escapeHtml(item.name)}</div><div class="pod-score">${Number(item.finalScore).toFixed(2)}</div><span class="pod-rank-label">第 ${realRank} 名</span></div></div>`}).join('');
+  const rest=sorted.slice(3);$('f-ranklist').innerHTML=rest.length?rest.map((item,i)=>{const detail=Object.entries(item.scores||{}).map(([n,v])=>`${escapeHtml(n)}:${Number(v).toFixed(1)}`).join('  ');return `<div class="rank-item" style="animation-delay:${.05*i}s"><div class="rk-num">${i+4}</div><div class="rk-info"><div class="rk-name">${escapeHtml(item.name)}</div><div class="rk-detail">${detail}</div></div><div class="rk-score">${Number(item.finalScore).toFixed(2)}</div></div>`}).join(''):''
+}
+function backToHost(){show('p-host');htab('hist')}
+function escapeHtml(str){return String(str).replace(/[&<>'"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]))}
+</script>
+</body>
+</html>
